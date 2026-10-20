@@ -16,7 +16,7 @@
 
 @layer base {
   body {
-    background-color: var(--color-navy);
+    background-color: var(--color-sea);
     color: var(--color-soft-white);
   }
 }

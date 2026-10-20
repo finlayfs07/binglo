@@ -43,6 +43,8 @@ Night-sky look, mobile-first, readable outdoors and on a projector.
 - Tap targets at least 44px tall.
 - Dark text (navy) on mint and pink backgrounds, never white.
 - Text contrast at least 4.5:1.
+- Flat style. No glow, text-shadow, gradients, blur/glassmorphism, emojis or icon libraries. Tactile buttons instead: the main button has a solid darker bottom edge (box-shadow 0 4px 0 #6569D4) that disappears when pressed.
+- Overrides the PRD: the Binglo title has NO glow.
 
 ## Rules that must not break
 - The server decides finish times (`finished_at = now()` in Postgres), never the browser.
