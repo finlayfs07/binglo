@@ -1,0 +1,51 @@
+# Binglo
+
+Real-life bingo web game. Players scan a QR code, join with a 6-character code, and prove each square with a selfie. A host creates the game, watches progress, reviews the winners' photos and publishes results. First target: APU's November orientation, about 200 players in one room.
+
+The full spec is in `docs/PRD.md`. Read it when a task touches game rules, screens, the data model or design.
+
+## Stack
+- React + Vite, **JavaScript only (no TypeScript)**
+- Tailwind CSS v4 (`@tailwindcss/vite` plugin, theme colours defined with `@theme` in `src/index.css`)
+- React Router for routes: `/`, `/create`, `/join/:code`, `/game/:code`, `/host/:code`
+- Supabase: Postgres, Realtime (host and lobby only), Storage, anonymous sign-in
+- Vitest for unit tests
+- Hosted on Vercel, code on GitHub
+- Dev machine: Windows, VS Code, cmd terminal
+
+## How to work with me (Fin)
+I'm a second-year software engineering student building this to learn, not just to ship.
+- Do **one small thing per request**: one component, one function or one config change. Don't build ahead of what I asked.
+- After each change, explain in 2–4 plain sentences what you changed and why.
+- Don't install a package without telling me what it does and why we need it.
+- Prefer simple, readable code over clever code. No abstractions "for later".
+- When I write code myself and ask for a review, point out problems and explain them. Don't silently rewrite it.
+- Suggest a short commit message at the end of each working change.
+
+## Design rules
+Night-sky look, mobile-first, readable outdoors and on a projector.
+
+| Token | Hex | Use |
+| --- | --- | --- |
+| navy | #1C1F4A | page background |
+| navy-light | #2A2E66 | cards, squares |
+| periwinkle | #8E92F2 | main button, title glow |
+| soft-white | #F4F4FB | main text |
+| lavender | #B9BCE6 | secondary text |
+| mint | #A6E3C4 | marked square, success |
+| pink | #F2B6D6 | bingo, highlights |
+| coral | #F07A6A | warnings, disqualify |
+| sea | #8FD3B6 | page edges on desktop |
+
+- One main (periwinkle) button per screen; everything else is outlined or text.
+- Buttons fully rounded, cards 16px radius (`rounded-2xl`).
+- Font: Nunito. Headings 700, body 400–600.
+- Tap targets at least 44px tall.
+- Dark text (navy) on mint and pink backgrounds, never white.
+- Text contrast at least 4.5:1.
+
+## Rules that must not break
+- The server decides finish times (`finished_at = now()` in Postgres), never the browser.
+- Photos are private to the host: private bucket, signed URLs, never shown to other players.
+- Camera only for proof photos, no gallery upload.
+- 5×5 has a FREE centre square; 4×4 and 6×6 don't.
