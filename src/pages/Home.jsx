@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
+import AppShell from '../components/AppShell.jsx'
 import HowToPlay from '../components/HowToPlay.jsx'
 
 // Fixed star positions (percent of the screen) so they don't jump on re-render.
@@ -26,9 +28,10 @@ const miniSquares = [
 
 function Home() {
   const [showHowToPlay, setShowHowToPlay] = useState(false)
+  const navigate = useNavigate()
 
   return (
-    <main className="relative mx-auto flex min-h-dvh max-w-[440px] flex-col overflow-hidden bg-navy px-6">
+    <AppShell>
       <div aria-hidden="true">
         {stars.map((star, i) => (
           <span
@@ -75,12 +78,14 @@ function Home() {
       <div className="relative flex flex-col gap-3 pb-8">
         <button
           type="button"
+          onClick={() => navigate('/create')}
           className="h-14 w-full rounded-full bg-periwinkle text-lg font-bold text-navy shadow-[0_4px_0_#6569D4] active:translate-y-1 active:shadow-none"
         >
           Create game
         </button>
         <button
           type="button"
+          onClick={() => navigate('/join')}
           className="h-14 w-full rounded-full border-2 border-lavender bg-transparent text-lg font-bold text-soft-white"
         >
           Join game
@@ -101,7 +106,7 @@ function Home() {
         open={showHowToPlay}
         onClose={() => setShowHowToPlay(false)}
       />
-    </main>
+    </AppShell>
   )
 }
 
