@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import HowToPlay from '../components/HowToPlay.jsx'
+
 // Fixed star positions (percent of the screen) so they don't jump on re-render.
 const stars = [
   { top: 6, left: 12, size: 2, opacity: 0.3 },
@@ -22,6 +25,8 @@ const miniSquares = [
 ]
 
 function Home() {
+  const [showHowToPlay, setShowHowToPlay] = useState(false)
+
   return (
     <main className="relative mx-auto flex min-h-dvh max-w-[440px] flex-col overflow-hidden bg-navy px-6">
       <div aria-hidden="true">
@@ -82,7 +87,7 @@ function Home() {
         </button>
         <button
           type="button"
-          onClick={() => {}}
+          onClick={() => setShowHowToPlay(true)}
           className="flex min-h-11 items-center justify-center gap-2 font-semibold text-lavender"
         >
           <span className="flex size-7 items-center justify-center rounded-full border-2 border-lavender font-bold">
@@ -91,6 +96,11 @@ function Home() {
           How to play
         </button>
       </div>
+
+      <HowToPlay
+        open={showHowToPlay}
+        onClose={() => setShowHowToPlay(false)}
+      />
     </main>
   )
 }
