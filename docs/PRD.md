@@ -12,7 +12,7 @@ Binglo is a web game for real-life bingo: players spot things around them and pr
 
 **Who it's for**
 
-- **Host:** an orientation leader, club committee member or party host. Sets up the game on one phone or laptop and often projects the code on a screen.
+- **Host:** an orientation leader, club committee member or party host. Creates and runs the game, usually on a laptop that's projected, and never plays.
 - **Player:** a new student or guest on their own phone, usually on campus Wi-Fi or mobile data, and probably meeting the others for the first time.
 
 **Goals for v1**
@@ -30,14 +30,14 @@ v1 includes only what's needed to run one real orientation game. Everything else
 | In v1 | Not in v1 (later) |
 | --- | --- |
 | Create a game, join with a code or QR | Accounts, logins, saved history |
-| Categories: APU, Campus, Park, Indoors, Party | AI checks on photos |
+| Categories: APU orientation (Campus, Park, Indoors, Party shown as locked "Soon") | AI checks on photos |
 | Custom board: host types their own prompts | Saving and reusing custom boards |
 | Grid size: 4×4, 5×5 or 6×6 | Teams or pair mode |
 | Timer: 5, 10, 15 or 20 minutes | Sound effects, music, animations beyond basics |
 | Selfie proof for every square | Native iOS/Android app |
-| Live count of players who finished | Paid plans, branding for schools |
+| Projected live leaderboard (top 10) and event feed | Paid plans, branding for schools |
 | Review step at the end, with disqualification | Chat or reactions |
-| Results: top 3 or top 5, by time | Analytics dashboard for hosts |
+| Results: podium (top 3 or top 5), top 10 leaderboard, own rank on each phone | Analytics dashboard for hosts |
 | How to play screen (the ? button) | Languages other than English |
 
 ## User flows
@@ -50,27 +50,30 @@ Read each column top to bottom. Arrows across are the moments when one side's ac
 
 ## Screens
 
-There are ten screens. The host uses 1–2–3–4–7–8–9, and a player uses 1–5–6–9. Every screen works on a phone first, and screens 3 and 9 also look good projected in a hall.
+There are ten screens. The host uses 1–2–3–4–8–9, and a player uses 1–5–6–7–9. Every screen works on a phone first, and screens 3, 4 and 9 also look good projected in a hall.
 
 1. **Home**
    - "Binglo" title, big and glowing, centred.
    - Two buttons: **Create game** (main) and **Join game**.
    - A **?** button at the bottom opens How to play.
 2. **Create game (host setup)**, one screen in three parts:
-   - **Category:** APU, Campus, Park, Indoors, Party, or **Custom**. Custom opens a pop-up where the host types one prompt per line; if there are too few prompts for the grid, the app asks for more.
+   - **Category:** APU orientation or **Custom**. Campus, Park, Indoors and Party are shown locked with a "Soon" label and can't be picked in v1. Custom opens a pop-up where the host types one prompt per line; if there are too few prompts for the grid, the app asks for more.
    - **Grid size:** 4×4, 5×5 (default) or 6×6.
    - **Timer:** 5, 10 (default), 15 or 20 minutes.
-   - **Winners to announce:** top 3 (default) or top 5.
-   - The host types their own name, then taps **Create**.
+   - **Winners to announce:** top 3 (default) or top 5. This is how many finishers the host reviews and puts on the podium.
+   - The host taps **Create**.
 3. **Lobby (host)**
    - A large 6-character code and a QR code, readable from the back of a hall.
    - **Copy link** and **Share** buttons.
    - A live list of joined players, with a count.
    - **Start game**, disabled until at least 2 players have joined.
-4. **Host game view**
-   - Countdown timer, players finished / total, and a live feed ("Aisha got bingo in 6:41").
+4. **Host game view** (projected)
+   - Countdown timer and players finished / total.
+   - A live leaderboard of the top 10, labelled "Live · final after review". Finished players rank by finish time, then unfinished players by most squares in their best line, then by total squares marked.
+   - A live feed of events: players joining and bingos ("Aisha got bingo in 6:41").
+   - No photos, ever.
    - **End game now** button, which asks to confirm.
-   - The host doesn't play in v1, which keeps the host's job simple.
+   - The host never plays, which keeps the host's job simple.
 5. **Join**
    - A code box (filled in automatically when they arrive via QR) and a name box, then **Join**.
    - Then a waiting screen: "You're in. Waiting for the host to start" with the player count.
@@ -82,11 +85,13 @@ There are ten screens. The host uses 1–2–3–4–7–8–9, and a player use
    - The prompt at the top, the front camera on, a shutter button, then **Use photo / Retake**.
    - A short line: "Ask first. Only the host sees this photo."
 8. **Review (host)**
+   - Before any photo is shown, the host must confirm they've stopped projecting.
    - Finishers in order of time. Tapping one shows their line's photos side by side, each with its prompt.
    - **Approve** or **Disqualify** per player. A disqualified player drops off and the next one moves up.
    - **Publish results** when the top 3 or 5 are all approved.
 9. **Results (everyone)**
-   - Podium for the top 3 or 5 with times, then everyone else who finished, then "didn't finish" with squares done.
+   - Podium for the top 3 or 5 with times, then a top 10 leaderboard (same ranking as the live one, with disqualified players removed).
+   - Each player also sees their own rank on their phone, even if they're outside the top 10.
    - Players see "Waiting for results…" until the host publishes.
 10. **How to play** (pop-up from the ? button): 4 short steps plus the rules, including what gets you disqualified.
 
@@ -156,7 +161,7 @@ The stack is React + Vite on the front end, Supabase for database, photo storage
 | Styling | Tailwind CSS | Colours from the Design table become reusable classes | Free |
 | Routing | React Router | `/`, `/create`, `/join/:code`, `/game/:code`, `/host/:code` | Free |
 | Database | Supabase (Postgres) | Real SQL (good for your CV), tables you can see in a dashboard | Free plan |
-| Live updates | Supabase Realtime | Lobby list, game start/end, finish feed | Free up to 200 connections |
+| Live updates | Supabase Realtime | Host lobby list, host live leaderboard and feed | Free up to 200 connections |
 | Photo storage | Supabase Storage | Same project, same permissions system | Free plan: 1 GB |
 | Identity | Supabase anonymous sign-in | Each phone gets an ID without a login screen | Free |
 | Photo shrinking | `browser-image-compression` | Turns 4 MB selfies into \~100 KB before upload | Free |
@@ -168,7 +173,7 @@ The stack is React + Vite on the front end, Supabase for database, photo storage
 
 **The 200-connection limit.** Supabase's free plan allows 200 concurrent Realtime connections and 100 messages per second ([Supabase docs](https://supabase.com/docs/guides/realtime/limits)). A 200-player game plus the host goes over that. The plan:
 
-- Only the **host** and the **lobby** use Realtime.
+- Only the **host's screens** (lobby and game view) use Realtime: one connection.
 - During play, each **player's phone checks the game status every 3 seconds** with a normal request (polling), which doesn't count against Realtime. It also copes better with weak Wi-Fi.
 - For the real orientation, consider Supabase Pro (500 connections) for that one month; check the current price on Supabase's pricing page.
 
@@ -185,7 +190,7 @@ The data model has four tables, plus prompt lists kept as JSON files in the code
 | `marks` | `id`, `player_id`, `cell_index`, `photo_path`, `created_at` | One row per square with a photo |
 | `custom_prompts` | `game_id`, `prompts` (array) | Only for Custom games |
 
-**Prompts.** Categories live in `src/data/prompts/apu.json`, `campus.json`, and so on: about 40 prompts each, so boards vary. Editing a JSON file is faster than building an admin page.
+**Prompts.** Categories live in `src/data/prompts/`, about 40 prompts each, so boards vary. v1 only needs `apu.json`; `campus.json` and the others come when those categories unlock. Editing a JSON file is faster than building an admin page.
 
 **Server-side logic (Postgres functions you call from React)**
 
@@ -196,7 +201,7 @@ The data model has four tables, plus prompt lists kept as JSON files in the code
 
 **Security (Row Level Security in Supabase)**
 
-- A player can only read their own marks and photos. The host can read every photo in their game.
+- A player can only read their own marks and photos. The host can read every mark and photo in their game.
 - Photos go in a private bucket, path `games/<game_id>/<player_id>/<cell>.jpg`, shown to the host through short-lived signed links.
 
 **Who listens to what**
@@ -204,7 +209,7 @@ The data model has four tables, plus prompt lists kept as JSON files in the code
 | Who | How | Listens for |
 | --- | --- | --- |
 | Host lobby | Realtime | New rows in `players` |
-| Host game view | Realtime | `players.finished_at` changes |
+| Host game view | Realtime (one connection) | Changes to `players` and `marks` |
 | Player waiting / board | Poll every 3 s | `games.status`, `ends_at`, finished count |
 | Player results | Poll every 3 s | `games.status = finished` |
 
@@ -263,8 +268,19 @@ The demo takes 7 days, one working slice per day, each ending with something you
 
 ## Open questions
 
-- [ ] Should the host also be able to play, or only run the game? (v1 assumes host only.)
+- [x] Should the host also be able to play, or only run the game? Decided Oct 20: the host never plays.
 - [ ] What are the 40 APU prompts? Draft them with the ambassadors, since they know what's actually around campus.
 - [ ] When is the November orientation schedule finalised, and who signs off on outside tools?
 - [ ] Does the orientation venue have Wi-Fi that can handle 200 phones uploading photos?
 - [ ] Is a domain like binglo.app worth buying before the pitch, or is the free Vercel URL fine?
+
+## Decisions (Oct 20)
+
+These override anything earlier in this document.
+
+1. **Categories.** Only "APU orientation" and "Custom" can be played in v1. Campus, Park, Indoors and Party are shown as locked with a "Soon" label.
+2. **The host never plays.** The host creates and runs the game, usually on a laptop that's projected.
+3. **Projected live leaderboard.** During play, the host screen shows the top 10 plus a live feed of events (players joining, bingos), labelled "Live · final after review". Ranking: finished players by finish time, then unfinished players by most squares in their best line, then by total squares marked.
+4. **Top 3 / Top 5** sets how many players the host reviews and puts on the podium. The Results screen always also shows a top 10 leaderboard, and each player sees their own rank on their phone.
+5. **No photos on the projector.** Before Review shows any photo, the host must confirm they've stopped projecting.
+6. **Realtime.** The host game view uses Realtime on `players` and `marks` over one connection. Players keep polling every 3 s.

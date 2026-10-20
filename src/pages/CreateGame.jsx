@@ -6,13 +6,12 @@ import Segmented from '../components/Segmented.jsx'
 import { promptsNeeded } from '../lib/game.js'
 
 const categories = [
-  { value: 'apu', label: 'APU' },
-  { value: 'campus', label: 'Campus' },
-  { value: 'park', label: 'Park' },
-  { value: 'indoors', label: 'Indoors' },
-  { value: 'party', label: 'Party' },
+  { value: 'apu', label: 'APU orientation' },
   { value: 'custom', label: 'Custom' },
 ]
+
+// Shown but not playable in v1.
+const lockedCategories = ['Campus', 'Park', 'Indoors', 'Party']
 
 const gridSizes = [
   { value: 4, label: '4×4' },
@@ -49,7 +48,6 @@ function CreateGame() {
   const [gridSize, setGridSize] = useState(5)
   const [minutes, setMinutes] = useState(10)
   const [winnersCount, setWinnersCount] = useState(3)
-  const [hostName, setHostName] = useState('')
 
   // customText is what's in the textarea; customPrompts is what was saved.
   const [customText, setCustomText] = useState('')
@@ -60,7 +58,7 @@ function CreateGame() {
   const draftCount = parsePrompts(customText).length
   const missingPrompts =
     category === 'custom' ? Math.max(0, needed - customPrompts.length) : 0
-  const canCreate = hostName.trim() !== '' && missingPrompts === 0
+  const canCreate = missingPrompts === 0
 
   function handleCategoryClick(value) {
     setCategory(value)
@@ -78,7 +76,6 @@ function CreateGame() {
       gridSize,
       durationSec: minutes * 60,
       winnersCount,
-      hostName: hostName.trim(),
       customPrompts: category === 'custom' ? customPrompts : null,
     })
   }
@@ -101,7 +98,7 @@ function CreateGame() {
           <div
             role="radiogroup"
             aria-labelledby="category-label"
-            className="grid grid-cols-3 gap-2"
+            className="grid grid-cols-2 gap-2"
           >
             {categories.map((option) => {
               const selected = option.value === category
@@ -121,6 +118,33 @@ function CreateGame() {
               )
             })}
           </div>
+
+          <p className="mt-3 text-sm text-lavender">Coming soon</p>
+          <div className="mt-2 grid grid-cols-4 gap-2">
+            {lockedCategories.map((name) => (
+              <button
+                key={name}
+                type="button"
+                aria-disabled="true"
+                className="flex h-11 cursor-not-allowed items-center justify-center gap-1 rounded-2xl bg-navy-light/50 text-sm font-semibold text-lavender"
+              >
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="size-3.5 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <rect x="5" y="11" width="14" height="10" rx="2" />
+                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+                {name}
+              </button>
+            ))}
+          </div>
+
           {missingPrompts > 0 && (
             <button
               type="button"
@@ -165,22 +189,6 @@ function CreateGame() {
             options={winnerOptions}
             value={winnersCount}
             onChange={setWinnersCount}
-          />
-        </section>
-
-        <section>
-          <label htmlFor="host-name" className="mb-2 block font-semibold">
-            Your name
-          </label>
-          <input
-            id="host-name"
-            type="text"
-            value={hostName}
-            onChange={(event) => setHostName(event.target.value)}
-            placeholder="e.g. Fin"
-            maxLength={20}
-            autoComplete="off"
-            className={`h-14 ${inputClass}`}
           />
         </section>
       </div>
