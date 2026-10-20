@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import BottomSheet from './BottomSheet.jsx'
 
 const steps = [
   {
@@ -29,71 +29,39 @@ const rules = [
 ]
 
 function HowToPlay({ open, onClose }) {
-  const gotItRef = useRef(null)
-
-  // While the sheet is open: focus "Got it" and listen for Escape.
-  useEffect(() => {
-    if (!open) return
-
-    gotItRef.current.focus()
-
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open, onClose])
-
-  if (!open) return null
-
   return (
-    <>
-      <div
-        aria-hidden="true"
-        className="fixed inset-0 bg-navy/80"
+    <BottomSheet open={open} onClose={onClose} title="How to play">
+      <ol className="mt-5 flex flex-col gap-4">
+        {steps.map((step, i) => (
+          <li key={step.title} className="flex gap-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-mint font-bold text-navy">
+              {i + 1}
+            </span>
+            <div>
+              <p className="font-bold">{step.title}</p>
+              <p className="text-lavender">{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <h3 className="mt-6 text-lg font-bold">Rules</h3>
+      <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-lavender">
+        {rules.map((rule) => (
+          <li key={rule}>{rule}</li>
+        ))}
+      </ul>
+
+      {/* autoFocus: React focuses this button when the sheet opens. */}
+      <button
+        type="button"
+        autoFocus
         onClick={onClose}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="how-to-play-title"
-        className="fixed inset-x-0 bottom-0 mx-auto max-h-[85dvh] max-w-[440px] overflow-y-auto rounded-t-3xl bg-navy-light p-6 text-left"
+        className="mt-6 h-14 w-full rounded-full bg-periwinkle text-lg font-bold text-navy shadow-[0_4px_0_#6569D4] active:translate-y-1 active:shadow-none"
       >
-        <h2 id="how-to-play-title" className="text-2xl font-bold">
-          How to play
-        </h2>
-
-        <ol className="mt-5 flex flex-col gap-4">
-          {steps.map((step, i) => (
-            <li key={step.title} className="flex gap-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-mint font-bold text-navy">
-                {i + 1}
-              </span>
-              <div>
-                <p className="font-bold">{step.title}</p>
-                <p className="text-lavender">{step.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-
-        <h3 className="mt-6 text-lg font-bold">Rules</h3>
-        <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-lavender">
-          {rules.map((rule) => (
-            <li key={rule}>{rule}</li>
-          ))}
-        </ul>
-
-        <button
-          ref={gotItRef}
-          type="button"
-          onClick={onClose}
-          className="mt-6 h-14 w-full rounded-full bg-periwinkle text-lg font-bold text-navy shadow-[0_4px_0_#6569D4] active:translate-y-1 active:shadow-none"
-        >
-          Got it
-        </button>
-      </div>
-    </>
+        Got it
+      </button>
+    </BottomSheet>
   )
 }
 
