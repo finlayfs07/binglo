@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import AppShell from '../components/AppShell.jsx'
 import BottomSheet from '../components/BottomSheet.jsx'
 import Segmented from '../components/Segmented.jsx'
 import { promptsNeeded } from '../lib/game.js'
+import { ensureSignedIn, supabase } from '../lib/supabase.js'
 
 const categories = [
   { value: 'apu', label: 'APU orientation' },
@@ -54,6 +55,10 @@ function CreateGame() {
   const [customPrompts, setCustomPrompts] = useState([])
   const [showCustomSheet, setShowCustomSheet] = useState(false)
 
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState(null)
+  const navigate = useNavigate()
+
   const needed = promptsNeeded(gridSize)
   const draftCount = parsePrompts(customText).length
   const missingPrompts =
@@ -70,14 +75,25 @@ function CreateGame() {
     setShowCustomSheet(false)
   }
 
-  function handleCreate() {
-    console.log({
-      category,
-      gridSize,
-      durationSec: minutes * 60,
-      winnersCount,
-      customPrompts: category === 'custom' ? customPrompts : null,
-    })
+  async function handleCreate() {
+    setCreating(true)
+    setCreateError(null)
+    try {
+      // create_game uses auth.uid(), so we must be signed in first.
+      await ensureSignedIn()
+      const { data, error } = await supabase.rpc('create_game', {
+        p_category: category,
+        p_grid_size: gridSize,
+        p_duration_sec: minutes * 60,
+        p_winners_count: winnersCount,
+        p_custom_prompts: category === 'custom' ? customPrompts : null,
+      })
+      if (error) throw error
+      navigate(`/host/${data.code}`)
+    } catch (error) {
+      setCreateError(error.message)
+      setCreating(false)
+    }
   }
 
   return (
@@ -194,13 +210,18 @@ function CreateGame() {
       </div>
 
       <div className="sticky bottom-0 -mx-6 mt-auto bg-navy px-6 pt-3 pb-6">
+        {createError && (
+          <p role="alert" className="mb-3 text-coral">
+            {createError}
+          </p>
+        )}
         <button
           type="button"
-          disabled={!canCreate}
+          disabled={!canCreate || creating}
           onClick={handleCreate}
           className={mainButtonClass}
         >
-          Create game
+          {creating ? 'Creating…' : 'Create game'}
         </button>
       </div>
 

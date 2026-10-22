@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router'
 import { ensureSignedIn } from './lib/supabase.js'
 import CreateGame from './pages/CreateGame.jsx'
 import Home from './pages/Home.jsx'
+import HostLobby from './pages/HostLobby.jsx'
 import JoinGame from './pages/JoinGame.jsx'
 import NotFound from './pages/NotFound.jsx'
 
@@ -20,6 +21,7 @@ function App() {
       <Route path="/create" element={<CreateGame />} />
       <Route path="/join" element={<JoinGame />} />
       <Route path="/join/:code" element={<JoinGame />} />
+      <Route path="/host/:code" element={<HostLobby />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
