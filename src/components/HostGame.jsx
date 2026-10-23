@@ -10,7 +10,7 @@ function formatClock(ms) {
 }
 
 function HostGame({ game }) {
-  const [now, setNow] = useState(Date.now())
+    const [now, setNow] = useState(() => Date.now())
 
   // Tick 4 times a second so the clock never looks stuck.
   useEffect(() => {

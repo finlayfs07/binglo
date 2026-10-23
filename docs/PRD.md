@@ -69,7 +69,7 @@ There are ten screens. The host uses 1–2–3–4–8–9, and a player uses 1�
    - **Start game**, disabled until at least 2 players have joined.
 4. **Host game view** (projected)
    - Countdown timer and players finished / total.
-   - A live leaderboard of the top 10, labelled "Live · final after review". Finished players rank by finish time, then unfinished players by most squares in their best line, then by total squares marked.
+   - A live leaderboard of the top 10, labelled "Live · final after review". Finished players rank by finish time, then unfinished players by total squares marked, then by name A–Z.
    - A live feed of events: players joining and bingos ("Aisha got bingo in 6:41").
    - No photos, ever.
    - **End game now** button, which asks to confirm.
@@ -125,7 +125,7 @@ A player wins by completing one line: a row, a column or either diagonal. Rankin
 - The host only looks at the photos in the winning line, not the whole board.
 - Disqualify if: a photo is missing what's on the square, the same person appears in two "person" photos, or it's a photo of a screen or picture.
 - "Country" squares are on trust: the host can't check where someone is from, so they never disqualify over them.
-- Results are published only after review. Players who didn't finish are ranked by the most squares in their best line, then by total squares.
+- Results are published only after review. Players who didn't finish are ranked by total squares marked, then by name A–Z.
 
 ## Design
 
@@ -282,7 +282,7 @@ These override anything earlier in this document.
 
 1. **Categories.** Only "APU orientation" and "Custom" can be played in v1. Campus, Park, Indoors and Party are shown as locked with a "Soon" label.
 2. **The host never plays.** The host creates and runs the game, usually on a laptop that's projected.
-3. **Projected live leaderboard.** During play, the host screen shows the top 10 plus a live feed of events (players joining, bingos), labelled "Live · final after review". Ranking: finished players by finish time, then unfinished players by most squares in their best line, then by total squares marked.
+3. **Projected live leaderboard.** During play, the host screen shows the top 10 plus a live feed of events (players joining, bingos), labelled "Live · final after review". Ranking: finished players by finish time, then unfinished players by total squares marked, then by name A–Z (changed Oct 23, see 12).
 4. **Top 3 / Top 5** sets how many players the host reviews and puts on the podium. The Results screen always also shows a top 10 leaderboard, and each player sees their own rank on their phone.
 5. **No photos on the projector.** Before Review shows any photo, the host must confirm they've stopped projecting.
 6. **Realtime.** The host game view uses Realtime on `players` and `marks` over one connection. Players keep polling every 3 s.
@@ -294,5 +294,6 @@ These override anything earlier in this document.
 9. **Country squares are on trust.** Prompts with group "country" ("Someone from Kenya") can't be checked, so the host never disqualifies over them.
 10. **Country limit.** When a board is dealt, at most 5 prompts can have group "country".
 11. **Custom prompts.** A line starting with "Someone" is a person square; any other line is a thing square.
+12. **Simpler ranking.** Unfinished players rank by total squares marked, then name A–Z, on both the live leaderboard and the final results. "Most squares in their best line" is no longer used. Finished players still rank by finish time.
 
 > **Open issue:** `apu.json` has 36 prompts, but 16 are "country". With the limit of 5, only 25 are usable: enough for 4×4 (16) and 5×5 (24), not 6×6 (36). APU needs at least 11 more non-country prompts, or 6×6 must be blocked for APU.

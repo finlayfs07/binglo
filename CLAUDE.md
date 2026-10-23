@@ -51,7 +51,7 @@ Night-sky look, mobile-first, readable outdoors and on a projector.
 Decided Oct 20 and Oct 23; these override `docs/PRD.md` where they differ (see "Decisions (Oct 20)" there).
 - v1 playable categories: "APU orientation" and "Custom" only. Campus, Park, Indoors and Party show as locked ("Soon").
 - The host never plays. They create and run the game, usually on a projected laptop.
-- Host game view = projected live leaderboard (top 10) + live event feed (joins, bingos), labelled "Live · final after review". Ranking: finished by finish time, then unfinished by most squares in best line, then by total squares marked.
+- Host game view = projected live leaderboard (top 10) + live event feed (joins, bingos), labelled "Live · final after review". Ranking (live leaderboard and final results): finished by finish time, then unfinished by total squares marked, then name A–Z. No "best line" ranking (`rankPlayers` in `src/lib/game.js`).
 - Top 3 / Top 5 = how many the host reviews and puts on the podium. Results always also show a top 10, and each player sees their own rank.
 - Photos never appear on the projected screen. Review asks the host to confirm they've stopped projecting before showing any photo.
 - Host game view uses Realtime on `players` and `marks` (one connection). Players poll every 3 s.
