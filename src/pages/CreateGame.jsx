@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import AppShell from '../components/AppShell.jsx'
 import BottomSheet from '../components/BottomSheet.jsx'
 import Segmented from '../components/Segmented.jsx'
+import apuPrompts from '../data/prompts/apu.json'
 import { promptsNeeded } from '../lib/game.js'
 import { ensureSignedIn, supabase } from '../lib/supabase.js'
 
@@ -39,6 +40,12 @@ const mainButtonClass =
   'h-14 w-full rounded-full bg-periwinkle text-lg font-bold text-navy shadow-[0_4px_0_#6569D4] enabled:active:translate-y-1 enabled:active:shadow-none disabled:opacity-50'
 
 // One prompt per line: trim each line, drop empty ones, remove duplicates.
+// A custom line starting with "Someone" needs a person in the photo.
+function toPrompt(line) {
+  const type = line.toLowerCase().startsWith('someone') ? 'person' : 'thing'
+  return { text: line, type }
+}
+
 function parsePrompts(text) {
   const lines = text.split('\n').map((line) => line.trim())
   return [...new Set(lines.filter((line) => line !== ''))]
@@ -86,7 +93,10 @@ function CreateGame() {
         p_grid_size: gridSize,
         p_duration_sec: minutes * 60,
         p_winners_count: winnersCount,
-        p_custom_prompts: category === 'custom' ? customPrompts : null,
+        p_prompts:
+          category === 'custom'
+            ? customPrompts.map(toPrompt)
+            : apuPrompts.prompts,
       })
       if (error) throw error
       navigate(`/host/${data.code}`)

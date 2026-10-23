@@ -6,6 +6,7 @@ import Home from './pages/Home.jsx'
 import HostLobby from './pages/HostLobby.jsx'
 import JoinGame from './pages/JoinGame.jsx'
 import NotFound from './pages/NotFound.jsx'
+import PlayerWaiting from './pages/PlayerWaiting.jsx'
 
 function App() {
   // Give this browser an anonymous Supabase user when the app loads.
@@ -21,6 +22,7 @@ function App() {
       <Route path="/create" element={<CreateGame />} />
       <Route path="/join" element={<JoinGame />} />
       <Route path="/join/:code" element={<JoinGame />} />
+      <Route path="/game/:code" element={<PlayerWaiting />} />
       <Route path="/host/:code" element={<HostLobby />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
