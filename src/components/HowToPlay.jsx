@@ -11,7 +11,7 @@ const steps = [
   },
   {
     title: 'Snap it',
-    text: 'Tap the square and take a selfie with that person. Ask first. Anyone can say no.',
+    text: 'Squares starting with “Someone” need a photo with that person in it. Ask first. Anyone can say no. Other squares just need a photo of the thing.',
   },
   {
     title: 'Bingo',
@@ -20,8 +20,8 @@ const steps = [
 ]
 
 const rules = [
-  'A different person in every photo.',
-  'The thing on the square must be visible in the photo.',
+  'A different person in every “Someone” photo.',
+  'What’s on the square must be visible in the photo.',
   'No photos of screens or pictures.',
   'Break a rule and the host can disqualify you.',
   'Only the host sees your photos. They’re deleted 24 hours after the game.',

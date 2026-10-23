@@ -4,11 +4,11 @@ Oct 16, 2026 · @Finlay Frank Shayo
 
 ## Overview
 
-Binglo is a web game for real-life bingo: players spot things around them and prove each square with a selfie. No download is needed. Players scan a QR code, type a 6-character code and play. The first target is APU's November orientation; parties, clubs and events come next.
+Binglo is a web game for real-life bingo: players spot things around them and prove each square with a photo. No download is needed. Players scan a QR code, type a 6-character code and play. The first target is APU's November orientation; parties, clubs and events come next.
 
 **Problem.** Icebreaker bingo at events uses paper cards with prompts like "ask someone their passion". Nobody can check them, people tick boxes without doing anything, and it doesn't feel like real bingo.
 
-**Solution.** Prompts you can see ("someone wearing braces"), a selfie with that person as proof, a host who checks the proof, and a race to complete a line against a timer.
+**Solution.** Prompts you can see ("someone wearing braces", "a tote bag"), a photo as proof (with the person in it, for "Someone" squares), a host who checks the proof, and a race to complete a line against a timer.
 
 **Who it's for**
 
@@ -34,7 +34,7 @@ v1 includes only what's needed to run one real orientation game. Everything else
 | Custom board: host types their own prompts | Saving and reusing custom boards |
 | Grid size: 4×4, 5×5 or 6×6 | Teams or pair mode |
 | Timer: 5, 10, 15 or 20 minutes | Sound effects, music, animations beyond basics |
-| Selfie proof for every square | Native iOS/Android app |
+| Photo proof for every square | Native iOS/Android app |
 | Projected live leaderboard (top 10) and event feed | Paid plans, branding for schools |
 | Review step at the end, with disqualification | Chat or reactions |
 | Results: podium (top 3 or top 5), top 10 leaderboard, own rank on each phone | Analytics dashboard for hosts |
@@ -57,7 +57,7 @@ There are ten screens. The host uses 1–2–3–4–8–9, and a player uses 1�
    - Two buttons: **Create game** (main) and **Join game**.
    - A **?** button at the bottom opens How to play.
 2. **Create game (host setup)**, one screen in three parts:
-   - **Category:** APU orientation or **Custom**. Campus, Park, Indoors and Party are shown locked with a "Soon" label and can't be picked in v1. Custom opens a pop-up where the host types one prompt per line; if there are too few prompts for the grid, the app asks for more.
+   - **Category:** APU orientation or **Custom**. Campus, Park, Indoors and Party are shown locked with a "Soon" label and can't be picked in v1. Custom opens a pop-up where the host types one prompt per line; if there are too few prompts for the grid, the app asks for more. A line starting with "Someone" becomes a person square; any other line is a thing square.
    - **Grid size:** 4×4, 5×5 (default) or 6×6.
    - **Timer:** 5, 10 (default), 15 or 20 minutes.
    - **Winners to announce:** top 3 (default) or top 5. This is how many finishers the host reviews and puts on the podium.
@@ -81,8 +81,8 @@ There are ten screens. The host uses 1–2–3–4–8–9, and a player uses 1�
    - Top bar: time left and how many people have finished.
    - The grid. Tapping an open square opens the camera; a square with a photo shows a tick.
    - The board shows a bingo animation the moment a line is complete, along with the player's time.
-7. **Camera / selfie proof**
-   - The prompt at the top, the front camera on, a shutter button, then **Use photo / Retake**.
+7. **Camera / photo proof**
+   - The prompt at the top, the back camera on, a flip button to switch cameras, a shutter button, then **Use photo / Retake**.
    - A short line: "Ask first. Only the host sees this photo."
 8. **Review (host)**
    - Before any photo is shown, the host must confirm they've stopped projecting.
@@ -103,14 +103,15 @@ A player wins by completing one line: a row, a column or either diagonal. Rankin
 
 - Every player gets the same prompts in a **different random order**, so nobody can copy a neighbour's line.
 - 5×5 has a FREE centre square. 4×4 and 6×6 have no centre, so no free square.
-- The category needs at least N² prompts (16, 24 with FREE, or 36). The app picks randomly from the category's pool.
+- The category needs at least N² prompts (16, 24 with FREE, or 36). The app picks randomly from the category's pool, with at most 5 prompts from the "country" group.
+- Each prompt has a type: **person** (the photo must include that person) or **thing** (the photo just needs the object).
 
 **Squares and proof**
 
-- Tap a square, take a selfie in the app, and the square is marked straight away. No waiting for approval during play, which keeps the game fast.
+- Tap a square, take a photo in the app, and the square is marked straight away. No waiting for approval during play, which keeps the game fast.
 - The camera only: no uploading from the gallery.
 - A player can retake a square's photo until they finish.
-- Rule (shown in How to play, checked in review): a different person in every photo, and the prompt must be visible.
+- Rule (shown in How to play, checked in review): a different person in every "person" photo, and what's on the square must be visible. For "thing" squares, the object just needs to be visible.
 
 **Winning**
 
@@ -122,7 +123,8 @@ A player wins by completing one line: a row, a column or either diagonal. Rankin
 
 - The host reviews finishers in time order, only until the top 3 or 5 are approved. Nobody has to check 200 boards.
 - The host only looks at the photos in the winning line, not the whole board.
-- Disqualify if: a photo is missing the prompt, the same person appears twice, or it's a photo of a screen or picture.
+- Disqualify if: a photo is missing what's on the square, the same person appears in two "person" photos, or it's a photo of a screen or picture.
+- "Country" squares are on trust: the host can't check where someone is from, so they never disqualify over them.
 - Results are published only after review. Players who didn't finish are ranked by the most squares in their best line, then by total squares.
 
 ## Design
@@ -164,7 +166,7 @@ The stack is React + Vite on the front end, Supabase for database, photo storage
 | Live updates | Supabase Realtime | Host lobby list, host live leaderboard and feed | Free up to 200 connections |
 | Photo storage | Supabase Storage | Same project, same permissions system | Free plan: 1 GB |
 | Identity | Supabase anonymous sign-in | Each phone gets an ID without a login screen | Free |
-| Photo shrinking | `browser-image-compression` | Turns 4 MB selfies into \~100 KB before upload | Free |
+| Photo shrinking | `browser-image-compression` | Turns 4 MB photos into \~100 KB before upload | Free |
 | QR code | `qrcode.react` | Draws the join QR in the lobby | Free |
 | Hosting | Vercel | Connects to GitHub, deploys on every push | Free (Hobby) |
 | Code | GitHub | Version control; the repo becomes a portfolio piece | Free |
@@ -190,7 +192,7 @@ The data model has four tables, plus prompt lists kept as JSON files in the code
 | `marks` | `id`, `player_id`, `cell_index`, `photo_path`, `created_at` | One row per square with a photo |
 | `custom_prompts` | `game_id`, `prompts` (array) | Only for Custom games |
 
-**Prompts.** Categories live in `src/data/prompts/`, about 40 prompts each, so boards vary. v1 only needs `apu.json`; `campus.json` and the others come when those categories unlock. Editing a JSON file is faster than building an admin page.
+**Prompts.** Categories live in `src/data/prompts/`, about 40 prompts each, so boards vary. v1 only needs `apu.json`; `campus.json` and the others come when those categories unlock. Each prompt is `{ "text", "type" }`, where `type` is `"person"` or `"thing"`, plus an optional `"group"` (for now only `"country"`). Editing a JSON file is faster than building an admin page.
 
 **Server-side logic (Postgres functions you call from React)**
 
@@ -222,7 +224,7 @@ Photos of new students are the main thing a university will question, so privacy
 - Only first names or nicknames; no email, no login.
 - Photos are private to the host, never shown to other players or on the projector.
 - All photos for a game are deleted 24 hours after it ends (a scheduled Supabase job).
-- The rules say: ask before you take the selfie; anyone can say no.
+- The rules say: ask before you take a photo of someone; anyone can say no.
 
 **Edge cases**
 
@@ -249,7 +251,7 @@ The demo takes 7 days, one working slice per day, each ending with something you
 | 2 | Supabase project, `games` + `players` tables, anonymous sign-in, Create game and Join screens | Tables, primary/foreign keys, what a client library does | You create a game on a laptop and join it from your phone |
 | 3 | Lobby with Realtime player list, QR code, Start game | Websockets vs normal requests; subscribing and unsubscribing | Players appear live; Start moves everyone to the board |
 | 4 | Board: shuffled deal, grid sizes, FREE square, timer, line detection (with unit tests) | Pure functions and testing them with Vitest | Tests pass for rows, columns, both diagonals on 4, 5, 6 |
-| 5 | Camera, photo compression, Storage upload, `mark_square` function, Row Level Security | Who can read what (RLS); why the server decides the time | A selfie marks a square; another player can't see it |
+| 5 | Camera, photo compression, Storage upload, `mark_square` function, Row Level Security | Who can read what (RLS); why the server decides the time | A photo marks a square; another player can't see it |
 | 6 | Host game view, End game, Review screen, Results screen | State machines: lobby → playing → review → finished | One full game runs start to finish |
 | 7 | Play-test with 5+ friends, fix bugs, record a 30-second demo clip | Debugging from real users, not guesses | Clip recorded, bug list written |
 | Later | Load test with 200 fake players, polling, retry on failed uploads, auto-delete photos | Load testing and finding bottlenecks | 200 simulated players, no errors |
@@ -284,3 +286,13 @@ These override anything earlier in this document.
 4. **Top 3 / Top 5** sets how many players the host reviews and puts on the podium. The Results screen always also shows a top 10 leaderboard, and each player sees their own rank on their phone.
 5. **No photos on the projector.** Before Review shows any photo, the host must confirm they've stopped projecting.
 6. **Realtime.** The host game view uses Realtime on `players` and `marks` over one connection. Players keep polling every 3 s.
+
+**Added Oct 23**
+
+7. **Photo proof, not selfies.** The camera opens with the back camera and has a flip button. Camera only, no gallery.
+8. **Person and thing squares.** Every prompt has a type. "person" squares need a different person in every photo; "thing" squares just need the object visible.
+9. **Country squares are on trust.** Prompts with group "country" ("Someone from Kenya") can't be checked, so the host never disqualifies over them.
+10. **Country limit.** When a board is dealt, at most 5 prompts can have group "country".
+11. **Custom prompts.** A line starting with "Someone" is a person square; any other line is a thing square.
+
+> **Open issue:** `apu.json` has 36 prompts, but 16 are "country". With the limit of 5, only 25 are usable: enough for 4×4 (16) and 5×5 (24), not 6×6 (36). APU needs at least 11 more non-country prompts, or 6×6 must be blocked for APU.

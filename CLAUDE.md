@@ -1,6 +1,6 @@
 # Binglo
 
-Real-life bingo web game. Players scan a QR code, join with a 6-character code, and prove each square with a selfie. A host creates the game, watches progress, reviews the winners' photos and publishes results. First target: APU's November orientation, about 200 players in one room.
+Real-life bingo web game. Players scan a QR code, join with a 6-character code, and prove each square with a photo. A host creates the game, watches progress, reviews the winners' photos and publishes results. First target: APU's November orientation, about 200 players in one room.
 
 The full spec is in `docs/PRD.md`. Read it when a task touches game rules, screens, the data model or design.
 
@@ -47,13 +47,18 @@ Night-sky look, mobile-first, readable outdoors and on a projector.
 - Overrides the PRD: the Binglo title has NO glow.
 
 ## Product decisions
-Decided Oct 20; these override `docs/PRD.md` where they differ (see "Decisions (Oct 20)" there).
+Decided Oct 20 and Oct 23; these override `docs/PRD.md` where they differ (see "Decisions (Oct 20)" there).
 - v1 playable categories: "APU orientation" and "Custom" only. Campus, Park, Indoors and Party show as locked ("Soon").
 - The host never plays. They create and run the game, usually on a projected laptop.
 - Host game view = projected live leaderboard (top 10) + live event feed (joins, bingos), labelled "Live · final after review". Ranking: finished by finish time, then unfinished by most squares in best line, then by total squares marked.
 - Top 3 / Top 5 = how many the host reviews and puts on the podium. Results always also show a top 10, and each player sees their own rank.
 - Photos never appear on the projected screen. Review asks the host to confirm they've stopped projecting before showing any photo.
 - Host game view uses Realtime on `players` and `marks` (one connection). Players poll every 3 s.
+- Proof is a photo, not a selfie. Camera opens on the back camera, with a flip button. Camera only, no gallery.
+- Prompts have `type` "person" (photo must include that person; a different person in every one) or "thing" (object visible). Some have `group: "country"`.
+- Country squares are on trust: the host never disqualifies over them.
+- Dealing a board: at most 5 prompts with group "country".
+- Custom prompts: a line starting with "Someone" is a person square, otherwise a thing square.
 
 ## Rules that must not break
 - The server decides finish times (`finished_at = now()` in Postgres), never the browser.
