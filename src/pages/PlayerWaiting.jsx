@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import AppShell from '../components/AppShell.jsx'
+import Board from '../components/Board.jsx'
 import { ensureSignedIn, supabase } from '../lib/supabase.js'
 
 function PlayerWaiting() {
   const { code } = useParams()
   const navigate = useNavigate()
 
-  const [name, setName] = useState(null)
+  const [player, setPlayer] = useState(null) // { name, board }
   const [playerCount, setPlayerCount] = useState(null)
-  const [status, setStatus] = useState(null)
+  const [game, setGame] = useState(null) // { status, grid_size, ends_at }
   const [loadError, setLoadError] = useState(null)
 
   // Load this device's player row for this game, or send them to Join.
@@ -21,7 +22,7 @@ function PlayerWaiting() {
         const user = await ensureSignedIn()
         const { data, error } = await supabase
           .from('players')
-          .select('name, games!inner(code)')
+          .select('name, board, games!inner(code)')
           .eq('games.code', code.toUpperCase())
           .eq('user_id', user.id)
           .maybeSingle()
@@ -31,7 +32,7 @@ function PlayerWaiting() {
           navigate(`/join/${code}`, { replace: true })
           return
         }
-        setName(data.name)
+        setPlayer({ name: data.name, board: data.board })
       } catch (error) {
         if (!ignore) setLoadError(error.message)
       }
@@ -53,13 +54,13 @@ function PlayerWaiting() {
           supabase.rpc('game_player_count', { p_code: code }),
           supabase
             .from('games')
-            .select('status')
+            .select('status, grid_size, ends_at')
             .eq('code', code.toUpperCase())
             .maybeSingle(),
         ])
         if (!countResult.error) setPlayerCount(countResult.data)
         if (!gameResult.error && gameResult.data) {
-          setStatus(gameResult.data.status)
+          setGame(gameResult.data)
         }
       } catch {
         // Bad Wi-Fi: keep the last values and try again on the next tick.
@@ -71,6 +72,18 @@ function PlayerWaiting() {
     return () => clearInterval(intervalId)
   }, [code])
 
+  if (!loadError && player && game?.status === 'playing') {
+    return (
+      <AppShell>
+        <Board
+          board={player.board}
+          gridSize={game.grid_size}
+          endsAt={game.ends_at}
+        />
+      </AppShell>
+    )
+  }
+
   return (
     <AppShell>
       <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -78,14 +91,11 @@ function PlayerWaiting() {
           <p role="alert" className="text-coral">
             {loadError}
           </p>
-        ) : name === null ? (
+        ) : player === null ? (
           <p className="text-lavender">Loading…</p>
-        ) : status === 'playing' ? (
-          // Placeholder until the board is built.
-          <h1 className="text-3xl font-bold">Game started!</h1>
         ) : (
           <>
-            <h1 className="text-3xl font-bold">You’re in, {name}</h1>
+            <h1 className="text-3xl font-bold">You’re in, {player.name}</h1>
             <p className="mt-2 text-lavender">Waiting for the host to start</p>
             {playerCount !== null && (
               <p className="mt-6 font-semibold">{playerCount} players joined</p>
