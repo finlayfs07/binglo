@@ -9,6 +9,7 @@ function PlayerWaiting() {
 
   const [name, setName] = useState(null)
   const [playerCount, setPlayerCount] = useState(null)
+  const [status, setStatus] = useState(null)
   const [loadError, setLoadError] = useState(null)
 
   // Load this device's player row for this game, or send them to Join.
@@ -42,22 +43,31 @@ function PlayerWaiting() {
     }
   }, [code, navigate])
 
-  // Poll the player count every 3 seconds (players don't use Realtime).
+  // Poll the player count and game status every 3 seconds
+  // (players don't use Realtime).
   useEffect(() => {
-    async function loadCount() {
+    async function poll() {
       try {
         await ensureSignedIn()
-        const { data, error } = await supabase.rpc('game_player_count', {
-          p_code: code,
-        })
-        if (!error) setPlayerCount(data)
+        const [countResult, gameResult] = await Promise.all([
+          supabase.rpc('game_player_count', { p_code: code }),
+          supabase
+            .from('games')
+            .select('status')
+            .eq('code', code.toUpperCase())
+            .maybeSingle(),
+        ])
+        if (!countResult.error) setPlayerCount(countResult.data)
+        if (!gameResult.error && gameResult.data) {
+          setStatus(gameResult.data.status)
+        }
       } catch {
-        // Bad Wi-Fi: keep the last count and try again on the next tick.
+        // Bad Wi-Fi: keep the last values and try again on the next tick.
       }
     }
 
-    loadCount()
-    const intervalId = setInterval(loadCount, 3000)
+    poll()
+    const intervalId = setInterval(poll, 3000)
     return () => clearInterval(intervalId)
   }, [code])
 
@@ -70,6 +80,9 @@ function PlayerWaiting() {
           </p>
         ) : name === null ? (
           <p className="text-lavender">Loading…</p>
+        ) : status === 'playing' ? (
+          // Placeholder until the board is built.
+          <h1 className="text-3xl font-bold">Game started!</h1>
         ) : (
           <>
             <h1 className="text-3xl font-bold">You’re in, {name}</h1>
