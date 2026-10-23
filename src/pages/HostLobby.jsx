@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import HostShell from '../components/HostShell.jsx'
+import HostGame from '../components/HostGame.jsx'
 import { ensureSignedIn, supabase } from '../lib/supabase.js'
 
 const outlinedButtonClass =
@@ -162,16 +163,7 @@ function HostLobby() {
 
   // Placeholder until the host game view is built.
   if (game.status === 'playing') {
-    return (
-      <HostShell>
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <h1 className="text-5xl font-extrabold">Game started</h1>
-          <p className="mt-4 text-2xl text-lavender">
-            Ends at {new Date(game.ends_at).toLocaleTimeString()}
-          </p>
-        </div>
-      </HostShell>
-    )
+    return <HostGame game={game} />
   }
 
   return (
