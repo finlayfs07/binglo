@@ -45,6 +45,7 @@ Night-sky look, mobile-first, readable outdoors and on a projector.
 - Text contrast at least 4.5:1.
 - Flat style. No glow, text-shadow, gradients, blur/glassmorphism, emojis or icon libraries. Tactile buttons instead: the main button has a solid darker bottom edge (box-shadow 0 4px 0 #6569D4) that disappears when pressed.
 - Overrides the PRD: the Binglo title has NO glow.
+- Results/leaderboard screen: Kahoot-style layout, made flat. 1st place in the middle and raised, 2nd on the left, 3rd on the right, as cards with a solid circular number badge (1 = pink, 2 = periwinkle, 3 = mint, navy numbers). Ranks 4–10 below as a clean list with thin lavender dividers, rank number on the left and time on the right. No glossy medals, gradients or glow.
 
 ## Product decisions
 Decided Oct 20 and Oct 23; these override `docs/PRD.md` where they differ (see "Decisions (Oct 20)" there).

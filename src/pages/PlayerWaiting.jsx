@@ -8,9 +8,9 @@ function PlayerWaiting() {
   const { code } = useParams()
   const navigate = useNavigate()
 
-  const [player, setPlayer] = useState(null) // { name, board }
+  const [player, setPlayer] = useState(null) // { id, game_id, name, board, finished_at }
   const [playerCount, setPlayerCount] = useState(null)
-  const [game, setGame] = useState(null) // { status, grid_size, ends_at }
+  const [game, setGame] = useState(null) // { status, grid_size, started_at, ends_at }
   const [loadError, setLoadError] = useState(null)
 
   // Load this device's player row for this game, or send them to Join.
@@ -22,7 +22,7 @@ function PlayerWaiting() {
         const user = await ensureSignedIn()
         const { data, error } = await supabase
           .from('players')
-          .select('name, board, games!inner(code)')
+          .select('id, game_id, name, board, finished_at, games!inner(code)')
           .eq('games.code', code.toUpperCase())
           .eq('user_id', user.id)
           .maybeSingle()
@@ -32,7 +32,7 @@ function PlayerWaiting() {
           navigate(`/join/${code}`, { replace: true })
           return
         }
-        setPlayer({ name: data.name, board: data.board })
+        setPlayer(data)
       } catch (error) {
         if (!ignore) setLoadError(error.message)
       }
@@ -54,7 +54,7 @@ function PlayerWaiting() {
           supabase.rpc('game_player_count', { p_code: code }),
           supabase
             .from('games')
-            .select('status, grid_size, ends_at')
+            .select('status, grid_size, started_at, ends_at')
             .eq('code', code.toUpperCase())
             .maybeSingle(),
         ])
@@ -76,9 +76,13 @@ function PlayerWaiting() {
     return (
       <AppShell>
         <Board
+          playerId={player.id}
+          gameId={player.game_id}
           board={player.board}
           gridSize={game.grid_size}
+          startedAt={game.started_at}
           endsAt={game.ends_at}
+          finishedAt={player.finished_at}
         />
       </AppShell>
     )
