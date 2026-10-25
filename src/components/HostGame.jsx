@@ -34,6 +34,58 @@ function replaceOrAdd(list, item, isSame) {
     : [...list, item]
 }
 
+// Build the feed from timestamps: squares marked, bingos, late joins.
+// Newest first, max 8.
+function buildFeed(players, marks, startedAt) {
+  const nameById = new Map(players.map((p) => [p.id, p.name]))
+  const events = []
+
+  // Group marks by player so each one can say "3rd square" etc.
+  const marksByPlayer = new Map()
+  for (const mark of marks) {
+    if (!nameById.has(mark.player_id)) continue
+    if (!marksByPlayer.has(mark.player_id)) marksByPlayer.set(mark.player_id, [])
+    marksByPlayer.get(mark.player_id).push(mark)
+  }
+
+  for (const [playerId, list] of marksByPlayer) {
+    list.sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))
+    list.forEach((mark, i) => {
+      const count = i + 1
+      events.push({
+        key: `mark-${playerId}-${mark.cell_index}`,
+        at: Date.parse(mark.created_at),
+        text: `${nameById.get(playerId)} · ${count} ${count === 1 ? 'square' : 'squares'}`,
+        bingo: false,
+      })
+    })
+  }
+
+  for (const player of players) {
+    if (player.finished_at) {
+      const finishedAt = Date.parse(player.finished_at)
+      events.push({
+        key: `bingo-${player.id}`,
+        at: finishedAt,
+        text: `${player.name} got bingo in ${formatElapsed(finishedAt - startedAt)}`,
+        bingo: true,
+      })
+    }
+    if (Date.parse(player.joined_at) > startedAt) {
+      events.push({
+        key: `join-${player.id}`,
+        at: Date.parse(player.joined_at),
+        text: `${player.name} joined late`,
+        bingo: false,
+      })
+    }
+  }
+
+  // Newest first. A bingo and its last square share a timestamp: bingo on top.
+  events.sort((a, b) => b.at - a.at || b.bingo - a.bingo)
+  return events.slice(0, 8)
+}
+
 function HostGame({ game }) {
   const [now, setNow] = useState(() => Date.now())
   const [players, setPlayers] = useState([])
@@ -62,7 +114,7 @@ function HostGame({ game }) {
       // marks has no game_id, so filter through the players table.
       const { data: markRows, error: marksError } = await supabase
         .from('marks')
-        .select('player_id, cell_index, players!inner(game_id)')
+        .select('player_id, cell_index, created_at, players!inner(game_id)')
         .eq('players.game_id', game.id)
       if (ignore) return
       if (marksError) return setLoadError(marksError.message)
@@ -118,6 +170,7 @@ function HostGame({ game }) {
   const startedAt = new Date(game.started_at).getTime()
   const top10 = rankPlayers(players, marks).slice(0, 10)
   const finishedCount = players.filter((p) => p.finished_at).length
+  const feed = buildFeed(players, marks, startedAt)
 
   return (
     <HostShell>
@@ -131,40 +184,61 @@ function HostGame({ game }) {
         <p className="text-7xl font-extrabold tabular-nums">{formatClock(msLeft)}</p>
       </div>
 
-      <section className="mt-10 max-w-3xl">
-        <p className="text-lg font-bold text-lavender">Live · final after review</p>
-
-        {loadError ? (
-          <p className="mt-4 text-xl text-coral">{loadError}</p>
-        ) : (
-          <ol className="mt-4">
-            {top10.map((row, i) => (
-              <li
-                key={row.id}
-                className="flex items-center gap-4 border-b border-navy-light py-3 text-2xl"
-              >
-                <span
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-extrabold ${
-                    badgeClass[i + 1] ?? 'text-lavender'
-                  }`}
+      {loadError ? (
+        <p className="mt-10 text-xl text-coral">{loadError}</p>
+      ) : (
+        <div className="mt-10 grid gap-12 lg:grid-cols-[2fr_1fr]">
+          <section>
+            <p className="text-lg font-bold text-lavender">Live · final after review</p>
+            <ol className="mt-4">
+              {top10.map((row, i) => (
+                <li
+                  key={row.id}
+                  className="flex items-center gap-4 border-b border-navy-light py-3 text-2xl"
                 >
-                  {i + 1}
-                </span>
-                <span className="flex-1 truncate font-bold">{row.name}</span>
-                {row.finishedAt ? (
-                  <span className="font-bold tabular-nums text-pink">
-                    Bingo · {formatElapsed(Date.parse(row.finishedAt) - startedAt)}
+                  <span
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-extrabold ${
+                      badgeClass[i + 1] ?? 'text-lavender'
+                    }`}
+                  >
+                    {i + 1}
                   </span>
-                ) : (
-                  <span className="text-lavender">
-                    {row.total} {row.total === 1 ? 'square' : 'squares'}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+                  <span className="flex-1 truncate font-bold">{row.name}</span>
+                  {row.finishedAt ? (
+                    <span className="font-bold tabular-nums text-pink">
+                      Bingo · {formatElapsed(Date.parse(row.finishedAt) - startedAt)}
+                    </span>
+                  ) : (
+                    <span className="text-lavender">
+                      {row.total} {row.total === 1 ? 'square' : 'squares'}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section>
+            <p className="text-lg font-bold text-lavender">Feed</p>
+            {feed.length === 0 ? (
+              <p className="mt-4 text-xl text-lavender">Waiting for the first square…</p>
+            ) : (
+              <ul className="mt-4">
+                {feed.map((event) => (
+                  <li
+                    key={event.key}
+                    className={`border-b border-navy-light py-3 text-xl ${
+                      event.bingo ? 'font-bold text-pink' : 'text-soft-white'
+                    }`}
+                  >
+                    {event.text}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      )}
     </HostShell>
   )
 }
