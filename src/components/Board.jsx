@@ -30,6 +30,8 @@ function Board({
   endsAt,
   finishedAt: initialFinishedAt,
   winningLine: initialWinningLine,
+  playerCount,
+  finishedCount,
 }) {
   const [marked, setMarked] = useState(() => new Set())
   const [finishedAt, setFinishedAt] = useState(initialFinishedAt)
@@ -129,6 +131,11 @@ function Board({
         ) : (
           <p className="text-4xl font-extrabold tabular-nums">
             {formatTime(Math.ceil(timeLeft / 1000))}
+          </p>
+        )}
+        {playerCount !== null && finishedCount !== null && (
+          <p className="mt-1 text-sm font-semibold text-lavender">
+            {finishedCount} / {playerCount} finished
           </p>
         )}
       </div>

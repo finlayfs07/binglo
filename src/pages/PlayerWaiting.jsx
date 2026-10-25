@@ -8,8 +8,9 @@ function PlayerWaiting() {
   const { code } = useParams()
   const navigate = useNavigate()
 
-  const [player, setPlayer] = useState(null) // { id, game_id, name, board, finished_at }
+  const [player, setPlayer] = useState(null) // { id, game_id, name, board, finished_at, winning_line }
   const [playerCount, setPlayerCount] = useState(null)
+  const [finishedCount, setFinishedCount] = useState(null)
   const [game, setGame] = useState(null) // { status, grid_size, started_at, ends_at }
   const [loadError, setLoadError] = useState(null)
 
@@ -44,21 +45,24 @@ function PlayerWaiting() {
     }
   }, [code, navigate])
 
-  // Poll the player count and game status every 3 seconds
+  // Poll the counts and game status every 3 seconds
   // (players don't use Realtime).
   useEffect(() => {
     async function poll() {
       try {
         await ensureSignedIn()
-        const [countResult, gameResult] = await Promise.all([
-          supabase.rpc('game_player_count', { p_code: code }),
+        const [progressResult, gameResult] = await Promise.all([
+          supabase.rpc('game_progress', { p_code: code }),
           supabase
             .from('games')
             .select('status, grid_size, started_at, ends_at')
             .eq('code', code.toUpperCase())
             .maybeSingle(),
         ])
-        if (!countResult.error) setPlayerCount(countResult.data)
+        if (!progressResult.error && progressResult.data) {
+          setPlayerCount(progressResult.data.players)
+          setFinishedCount(progressResult.data.finished)
+        }
         if (!gameResult.error && gameResult.data) {
           setGame(gameResult.data)
         }
@@ -85,6 +89,8 @@ function PlayerWaiting() {
           endsAt={game.ends_at}
           finishedAt={player.finished_at}
           winningLine={player.winning_line}
+          playerCount={playerCount}
+          finishedCount={finishedCount}
         />
       </AppShell>
     )
