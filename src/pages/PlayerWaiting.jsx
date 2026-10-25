@@ -22,7 +22,7 @@ function PlayerWaiting() {
         const user = await ensureSignedIn()
         const { data, error } = await supabase
           .from('players')
-          .select('id, game_id, name, board, finished_at, games!inner(code)')
+          .select('id, game_id, name, board, finished_at, winning_line, games!inner(code)')
           .eq('games.code', code.toUpperCase())
           .eq('user_id', user.id)
           .maybeSingle()
@@ -72,7 +72,8 @@ function PlayerWaiting() {
     return () => clearInterval(intervalId)
   }, [code])
 
-  if (!loadError && player && game?.status === 'playing') {
+  // Playing, review or finished: show the board (it locks itself at time's up).
+  if (!loadError && player && game && game.status !== 'lobby') {
     return (
       <AppShell>
         <Board
@@ -83,6 +84,7 @@ function PlayerWaiting() {
           startedAt={game.started_at}
           endsAt={game.ends_at}
           finishedAt={player.finished_at}
+          winningLine={player.winning_line}
         />
       </AppShell>
     )

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { findCompletedLine } from '../lib/game.js'
 import { uploadProof } from '../lib/proofs.js'
 import { supabase } from '../lib/supabase.js'
 import BottomSheet from './BottomSheet.jsx'
@@ -30,9 +29,12 @@ function Board({
   startedAt,
   endsAt,
   finishedAt: initialFinishedAt,
+  winningLine: initialWinningLine,
 }) {
   const [marked, setMarked] = useState(() => new Set())
   const [finishedAt, setFinishedAt] = useState(initialFinishedAt)
+  // The line the SERVER locked at bingo, e.g. [10, 11, 12, 13, 14].
+  const [winningLine, setWinningLine] = useState(initialWinningLine ?? null)
   const [openIndex, setOpenIndex] = useState(null) // square whose sheet is open
   const [cameraIndex, setCameraIndex] = useState(null) // square the camera is for
   // Uploads by square: { [index]: { photo, status: 'uploading' | 'failed', error } }
@@ -65,22 +67,15 @@ function Board({
     }
   }, [playerId])
 
+  // endsAt comes from the 3 s poll, so "End game now" reaches us within 3 s.
   const timeLeft = Math.max(0, new Date(endsAt).getTime() - now)
   const timeUp = timeLeft === 0
-  const locked = timeUp || finishedAt !== null
-
-  // The FREE square always counts as marked.
-  const markedWithFree = new Set(marked)
-  board.forEach((square, i) => {
-    if (square.type === 'free') markedWithFree.add(i)
-  })
-  const completedLine = finishedAt
-    ? findCompletedLine(markedWithFree, gridSize)
-    : null
+  const locked = timeUp // after bingo, only the winning line locks (below)
+  const lineSet = new Set(winningLine ?? [])
 
   const openSquare = openIndex === null ? null : board[openIndex]
   const openUpload = openIndex === null ? null : uploads[openIndex]
-  const sheetOpen = openSquare !== null && !locked
+  const sheetOpen = openSquare !== null && !locked && !lineSet.has(openIndex)
 
   function setUpload(index, upload) {
     setUploads((current) => {
@@ -104,6 +99,7 @@ function Board({
       setUpload(index, null)
       setOpenIndex((current) => (current === index ? null : current))
       if (player.finished_at) setFinishedAt(player.finished_at)
+      if (player.winning_line) setWinningLine(player.winning_line)
     } catch (error) {
       // Keep the photo so "Try again" can resend it.
       setUpload(index, { photo, status: 'failed', error: error.message })
@@ -126,7 +122,10 @@ function Board({
     <div className="flex flex-col py-4">
       <div className="text-center">
         {timeUp ? (
-          <p className="text-4xl font-extrabold text-coral">Time’s up</p>
+          <>
+            <p className="text-4xl font-extrabold text-coral">Time’s up</p>
+            <p className="mt-1 text-lavender">Waiting for results…</p>
+          </>
         ) : (
           <p className="text-4xl font-extrabold tabular-nums">
             {formatTime(Math.ceil(timeLeft / 1000))}
@@ -138,15 +137,17 @@ function Board({
         <div role="status" className="mt-4 rounded-2xl bg-pink p-4 text-center text-navy">
           <p className="text-2xl font-extrabold">Bingo!</p>
           <p className="font-bold">Your time: {formatTime(finishSeconds)}</p>
-          <p className="font-semibold">Your time will be checked by the host</p>
+          <p className="font-semibold">
+            {timeUp
+              ? 'The host will check your line'
+              : 'Your line is locked. Keep filling other squares until time’s up.'}
+          </p>
         </div>
       )}
 
       <div className={`mt-4 grid gap-1.5 ${gridColsBySize[gridSize]}`}>
         {board.map((square, i) => {
-          const inLine = completedLine?.includes(i)
-          const ring = inLine ? 'ring-[3px] ring-pink' : ''
-          const base = `relative flex aspect-square items-center justify-center overflow-hidden rounded-xl p-1 text-center leading-tight font-semibold hyphens-auto break-words ${textSizeBySize[gridSize]} ${ring}`
+          const base = `relative flex aspect-square items-center justify-center overflow-hidden rounded-xl p-1 text-center leading-tight font-semibold hyphens-auto break-words ${textSizeBySize[gridSize]}`
 
           if (square.type === 'free') {
             return (
@@ -156,18 +157,31 @@ function Board({
             )
           }
 
+          const inLine = lineSet.has(i)
           const isMarked = marked.has(i)
           const isUploading = uploads[i]?.status === 'uploading'
+          const colours = inLine
+            ? 'bg-pink text-navy'
+            : isMarked
+              ? 'bg-mint text-navy'
+              : 'bg-navy-light text-soft-white'
+
           return (
             <button
               key={i}
               type="button"
-              disabled={locked}
+              disabled={locked || inLine}
               onClick={() => setOpenIndex(i)}
-              aria-label={`${square.text}${isUploading ? ', uploading' : isMarked ? ', marked' : ''}`}
-              className={`${base} ${
-                isMarked ? 'bg-mint text-navy' : 'bg-navy-light text-soft-white'
+              aria-label={`${square.text}${
+                isUploading
+                  ? ', uploading'
+                  : inLine
+                    ? ', part of your bingo, locked'
+                    : isMarked
+                      ? ', marked'
+                      : ''
               }`}
+              className={`${base} ${colours}`}
             >
               {isUploading ? 'Uploading…' : square.text}
               {isMarked && !isUploading && (
