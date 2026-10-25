@@ -27,6 +27,13 @@ const badgeClass = {
   3: 'bg-mint text-navy',
 }
 
+// Replace the item if it's already in the list, otherwise add it.
+function replaceOrAdd(list, item, isSame) {
+  return list.some(isSame)
+    ? list.map((x) => (isSame(x) ? item : x))
+    : [...list, item]
+}
+
 function HostGame({ game }) {
   const [now, setNow] = useState(() => Date.now())
   const [players, setPlayers] = useState([])
@@ -39,9 +46,10 @@ function HostGame({ game }) {
     return () => clearInterval(intervalId)
   }, [])
 
-  // Load this game's players and marks once.
+  // Load this game's players and marks, then keep them up to date live.
   useEffect(() => {
     let ignore = false
+    let channel = null
 
     async function load() {
       const { data: playerRows, error: playersError } = await supabase
@@ -61,11 +69,48 @@ function HostGame({ game }) {
 
       setPlayers(playerRows)
       setMarks(markRows)
+
+      channel = supabase
+        .channel(`host-game-${game.id}`)
+        // New players (late joiners) and finished_at changes (bingo).
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'players',
+            filter: `game_id=eq.${game.id}`,
+          },
+          (payload) => {
+            if (payload.eventType === 'DELETE') return
+            const row = payload.new
+            setPlayers((current) => replaceOrAdd(current, row, (p) => p.id === row.id))
+          },
+        )
+        // New marks and retakes. marks has no game_id to filter on, but RLS
+        // only sends this host's game, and rankPlayers ignores unknown players.
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'marks' },
+          (payload) => {
+            if (payload.eventType === 'DELETE') return
+            const row = payload.new
+            setMarks((current) =>
+              replaceOrAdd(
+                current,
+                row,
+                (m) => m.player_id === row.player_id && m.cell_index === row.cell_index,
+              ),
+            )
+          },
+        )
+        .subscribe()
     }
 
     load()
     return () => {
       ignore = true
+      if (channel) supabase.removeChannel(channel)
     }
   }, [game.id])
 
