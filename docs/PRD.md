@@ -81,9 +81,10 @@ There are ten screens. The host uses 1–2–3–4–8–9, and a player uses 1�
    - Top bar: time left and how many people have finished.
    - The grid. Tapping an open square opens the camera; a square with a photo shows a tick.
    - The board shows a bingo animation the moment a line is complete, along with the player's time.
+   - After bingo, only the winning line locks. Other squares stay open for new photos and retakes until the game ends.
 7. **Camera / photo proof**
    - The prompt at the top, the back camera on, a flip button to switch cameras, a shutter button, then **Use photo / Retake**.
-   - A short line: "Ask first. Only the host sees this photo."
+   - A short line: "Ask first. This photo goes to the host, and you can save it to your bingo card later."
 8. **Review (host)**
    - Before any photo is shown, the host must confirm they've stopped projecting.
    - Finishers in order of time. Tapping one shows their line's photos side by side, each with its prompt.
@@ -93,7 +94,8 @@ There are ten screens. The host uses 1–2–3–4–8–9, and a player uses 1�
    - Podium for the top 3 or 5 with times, then a top 10 leaderboard (same ranking as the live one, with disqualified players removed).
    - Each player also sees their own rank on their phone, even if they're outside the top 10.
    - Players see "Waiting for results…" until the host publishes.
-10. **How to play** (pop-up from the ? button): 4 short steps plus the rules, including what gets you disqualified.
+   - Planned: each player can make a share card of their own bingo card from here (see Decision 14).
+10. **How to play** (pop-up from the ? button): 4 short steps plus the rules, including what gets you disqualified and "Only share photos of people who said yes."
 
 ## Game rules and logic
 
@@ -110,13 +112,14 @@ A player wins by completing one line: a row, a column or either diagonal. Rankin
 
 - Tap a square, take a photo in the app, and the square is marked straight away. No waiting for approval during play, which keeps the game fast.
 - The camera only: no uploading from the gallery.
-- A player can retake a square's photo until they finish.
+- A player can take new photos and retake photos until the game ends, except in their winning line: those squares lock at bingo.
 - Rule (shown in How to play, checked in review): a different person in every "person" photo, and what's on the square must be visible. For "thing" squares, the object just needs to be visible.
 
 **Winning**
 
 - The app checks for a line after every marked square. When one is complete, it saves `finished_at` and the player's time = finished\_at − game start.
 - The game keeps going after the first bingo, so others can still finish and get ranked.
+- Only a player's first bingo counts. They can keep filling other squares, but extra squares and extra lines never change their rank.
 - The game ends when the timer hits 0 or the host taps **End game now**. Nobody can mark squares after that.
 
 **Review and disqualification**
@@ -222,8 +225,9 @@ Photos of new students are the main thing a university will question, so privacy
 **Privacy**
 
 - Only first names or nicknames; no email, no login.
-- Photos are private to the host, never shown to other players or on the projector.
-- All photos for a game are deleted 24 hours after it ends (a scheduled Supabase job).
+- Photos are visible only to the host and the player who took them, never to other players or on the projector.
+- All photos for a game are deleted 24 hours after it ends (a scheduled Supabase job), so players should save their bingo card before then.
+- Binglo never posts anything itself. A player can choose to share their own bingo card from their phone.
 - The rules say: ask before you take a photo of someone; anyone can say no.
 
 **Edge cases**
@@ -275,6 +279,7 @@ The demo takes 7 days, one working slice per day, each ending with something you
 - [ ] When is the November orientation schedule finalised, and who signs off on outside tools?
 - [ ] Does the orientation venue have Wi-Fi that can handle 200 phones uploading photos?
 - [ ] Is a domain like binglo.app worth buying before the pitch, or is the free Vercel URL fine?
+- [ ] Confirm with APU orientation (Yamin) that students may share their own bingo cards.
 
 ## Decisions (Oct 20)
 
@@ -295,5 +300,13 @@ These override anything earlier in this document.
 10. **Country limit.** When a board is dealt, at most 5 prompts can have group "country".
 11. **Custom prompts.** A line starting with "Someone" is a person square; any other line is a thing square.
 12. **Simpler ranking.** Unfinished players rank by total squares marked, then name A–Z, on both the live leaderboard and the final results. "Most squares in their best line" is no longer used. Finished players still rank by finish time.
+
+**Added Oct 25**
+
+13. **Only the winning line locks.** After bingo, the squares in the winning line lock; every other square stays open for new photos and retakes until the game ends. Only the first bingo counts: extra squares and lines never change rank. Planned: `007` SQL adds `players.winning_line`, and `mark_square` rejects only those cells (instead of rejecting every mark after bingo).
+14. **Share card (planned, after Results).** Built on the player's phone: a 9:16 image of their bingo card with their own photos and a small Binglo mark. It opens the phone's share sheet (Instagram etc.) and falls back to "Save image" where sharing isn't supported. Binglo never posts anything itself.
+15. **Consent wording.** The camera line becomes "Ask first. This photo goes to the host, and you can save it to your bingo card later." How to play adds the rule "Only share photos of people who said yes." Photos are visible to the host and the player who took them, and are still deleted 24 hours after the game, so players save their card before then.
+16. **Open question:** confirm with APU orientation (Yamin) that students may share their own bingo cards (also listed under Open questions).
+17. **Build order:** 19f End game now + auto-close → 20 player locks (`007` SQL, time-up lock, finished count in the top bar) → 21 Review → 22 Results → 23 Share card + consent wording.
 
 > **Open issue:** `apu.json` has 36 prompts, but 16 are "country". With the limit of 5, only 25 are usable: enough for 4×4 (16) and 5×5 (24), not 6×6 (36). APU needs at least 11 more non-country prompts, or 6×6 must be blocked for APU.

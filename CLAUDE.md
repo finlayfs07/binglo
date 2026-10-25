@@ -48,7 +48,7 @@ Night-sky look, mobile-first, readable outdoors and on a projector.
 - Results/leaderboard screen: Kahoot-style layout, made flat. 1st place in the middle and raised, 2nd on the left, 3rd on the right, as cards with a solid circular number badge (1 = pink, 2 = periwinkle, 3 = mint, navy numbers). Ranks 4–10 below as a clean list with thin lavender dividers, rank number on the left and time on the right. No glossy medals, gradients or glow.
 
 ## Product decisions
-Decided Oct 20 and Oct 23; these override `docs/PRD.md` where they differ (see "Decisions (Oct 20)" there).
+Decided Oct 20, 23 and 25; these override `docs/PRD.md` where they differ (see "Decisions (Oct 20)" there).
 - v1 playable categories: "APU orientation" and "Custom" only. Campus, Park, Indoors and Party show as locked ("Soon").
 - The host never plays. They create and run the game, usually on a projected laptop.
 - Host game view = projected live leaderboard (top 10) + live event feed (joins, bingos), labelled "Live · final after review". Ranking (live leaderboard and final results): finished by finish time, then unfinished by total squares marked, then name A–Z. No "best line" ranking (`rankPlayers` in `src/lib/game.js`).
@@ -60,9 +60,14 @@ Decided Oct 20 and Oct 23; these override `docs/PRD.md` where they differ (see "
 - Country squares are on trust: the host never disqualifies over them.
 - Dealing a board: at most 5 prompts with group "country".
 - Custom prompts: a line starting with "Someone" is a person square, otherwise a thing square.
+- After bingo, only the winning line locks; other squares stay open (new photos and retakes) until the game ends. Only the first bingo counts; extra squares never change rank. Planned `007` SQL: `players.winning_line`, and `mark_square` rejects only those cells.
+- Share card (planned, after Results): built on the player's phone, a 9:16 image of their own bingo card and photos with a small Binglo mark. Opens the share sheet, falls back to "Save image". Binglo never posts anything itself.
+- Consent wording: camera line "Ask first. This photo goes to the host, and you can save it to your bingo card later." How to play rule: "Only share photos of people who said yes." Photos still deleted 24 h after the game.
+- Open question: APU orientation (Yamin) must confirm students may share their own bingo cards.
+- Build order: 19f End game now + auto-close → 20 player locks (007 SQL, time-up lock, finished count in top bar) → 21 Review → 22 Results → 23 Share card + consent wording.
 
 ## Rules that must not break
 - The server decides finish times (`finished_at = now()` in Postgres), never the browser.
-- Photos are private to the host: private bucket, signed URLs, never shown to other players.
+- Photos are private to the host and the player who took them: private bucket, signed URLs, never shown to other players or on the projector.
 - Camera only for proof photos, no gallery upload.
 - 5×5 has a FREE centre square; 4×4 and 6×6 don't.
