@@ -173,7 +173,12 @@ function HostLobby() {
   }
 
   if (game.status === 'review') {
-    return <HostReview game={game} />
+      return (
+      <HostReview
+        game={game}
+        onPublished={(status) => setGame((current) => ({ ...current, status }))}
+      />
+    )
   }
 
   // Placeholder until the Results screen (Step 22) exists.

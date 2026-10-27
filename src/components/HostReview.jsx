@@ -3,7 +3,7 @@ import HostShell from './HostShell.jsx'
 import { supabase } from '../lib/supabase.js'
 
 const mainButtonClass =
-  'h-14 w-full max-w-md rounded-full bg-periwinkle text-lg font-bold text-navy shadow-[0_4px_0_#6569D4] enabled:active:translate-y-1 enabled:active:shadow-none disabled:opacity-50'
+  'h-14 w-full rounded-full bg-periwinkle text-lg font-bold text-navy shadow-[0_4px_0_#6569D4] enabled:active:translate-y-1 enabled:active:shadow-none disabled:opacity-50'
 
 // Full class names, so Tailwind can find them.
 const photoColsBySize = { 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6' }
@@ -35,7 +35,7 @@ const statusLabel = {
   'not-needed': { text: 'Not needed', className: 'text-lavender' },
 }
 
-function HostReview({ game }) {
+function HostReview({ game, onPublished }) {
   const [confirmedPrivate, setConfirmedPrivate] = useState(false)
   const [finishers, setFinishers] = useState(null) // null = loading
   const [loadError, setLoadError] = useState(null)
@@ -44,6 +44,11 @@ function HostReview({ game }) {
   const [photos, setPhotos] = useState(null) // [{ cell, square, url }]
   const [photoError, setPhotoError] = useState(null)
   const latestRequest = useRef(null) // ignore slow answers for an old selection
+
+  const [deciding, setDeciding] = useState(false)
+  const [decisionError, setDecisionError] = useState(null)
+  const [publishing, setPublishing] = useState(false)
+  const [publishError, setPublishError] = useState(null)
 
   // Load everyone who got bingo, fastest first.
   useEffect(() => {
@@ -68,6 +73,7 @@ function HostReview({ game }) {
     setSelectedId(player.id)
     setPhotos(null)
     setPhotoError(null)
+    setDecisionError(null)
     latestRequest.current = player.id
 
     const line = player.winning_line ?? []
@@ -101,6 +107,37 @@ function HostReview({ game }) {
     )
   }
 
+  // decision: 'approved' | 'disqualified' | 'pending' (undo)
+  async function decide(row, decision) {
+    setDeciding(true)
+    setDecisionError(null)
+    const { data, error } = await supabase.rpc('review_player', {
+      p_player_id: row.id,
+      p_decision: decision,
+    })
+    setDeciding(false)
+    if (error) return setDecisionError(error.message)
+
+    const updated = finishers.map((f) =>
+      f.id === data.id ? { ...f, approved: data.approved, disqualified: data.disqualified } : f,
+    )
+    setFinishers(updated)
+
+    // Jump to the next player who still needs a decision.
+    if (decision === 'pending') return
+    const next = withStatus(updated, game.winners_count).find((r) => r.status === 'needs-review')
+    if (next) selectFinisher(next)
+  }
+
+  async function handlePublish() {
+    setPublishing(true)
+    setPublishError(null)
+    const { data, error } = await supabase.rpc('publish_results', { p_game_id: game.id })
+    setPublishing(false)
+    if (error) return setPublishError(error.message)
+    onPublished(data) // 'finished'
+  }
+
   // 1. Gate: nothing with photos appears until the host confirms.
   if (!confirmedPrivate) {
     return (
@@ -114,7 +151,7 @@ function HostReview({ game }) {
           <button
             type="button"
             onClick={() => setConfirmedPrivate(true)}
-            className={`mt-10 ${mainButtonClass}`}
+            className={`mt-10 max-w-md ${mainButtonClass}`}
           >
             I’ve stopped projecting
           </button>
@@ -136,6 +173,7 @@ function HostReview({ game }) {
   const startedAt = new Date(game.started_at).getTime()
   const rows = withStatus(finishers, game.winners_count)
   const selected = rows.find((r) => r.id === selectedId) ?? null
+  const canPublish = !rows.some((r) => r.status === 'needs-review')
 
   return (
     <HostShell>
@@ -148,33 +186,56 @@ function HostReview({ game }) {
       </div>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_2fr]">
-        {/* Finishers, fastest first */}
-        <ol>
-          {rows.map((row) => (
-            <li key={row.id}>
-              <button
-                type="button"
-                onClick={() => selectFinisher(row)}
-                className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-xl ${
-                  row.id === selectedId ? 'bg-navy-light' : ''
-                }`}
-              >
-                <span className="w-8 font-extrabold text-lavender">{row.place ?? '–'}</span>
-                <span className="flex-1 truncate font-bold">{row.name}</span>
-                <span className="tabular-nums text-lavender">
-                  {formatElapsed(Date.parse(row.finished_at) - startedAt)}
-                </span>
-                <span
-                  className={`rounded-full px-3 py-1 text-sm font-bold ${statusLabel[row.status].className}`}
+        {/* Finishers, fastest first, then Publish */}
+        <div>
+          <ol>
+            {rows.map((row) => (
+              <li key={row.id}>
+                <button
+                  type="button"
+                  onClick={() => selectFinisher(row)}
+                  className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-xl ${
+                    row.id === selectedId ? 'bg-navy-light' : ''
+                  }`}
                 >
-                  {statusLabel[row.status].text}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
+                  <span className="w-8 font-extrabold text-lavender">{row.place ?? '–'}</span>
+                  <span className="flex-1 truncate font-bold">{row.name}</span>
+                  <span className="tabular-nums text-lavender">
+                    {formatElapsed(Date.parse(row.finished_at) - startedAt)}
+                  </span>
+                  <span
+                    className={`rounded-full px-3 py-1 text-sm font-bold ${statusLabel[row.status].className}`}
+                  >
+                    {statusLabel[row.status].text}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
 
-        {/* Winning-line photos of the selected finisher */}
+          <div className="mt-8">
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={!canPublish || publishing}
+              className={mainButtonClass}
+            >
+              {publishing ? 'Publishing…' : 'Publish results'}
+            </button>
+            {!canPublish && (
+              <p className="mt-2 text-center text-lavender">
+                Decide on everyone marked Needs review first
+              </p>
+            )}
+            {publishError && (
+              <p role="alert" className="mt-2 text-center text-coral">
+                {publishError}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Winning-line photos of the selected finisher, plus the decision */}
         <section>
           {!selected ? (
             <p className="text-xl text-lavender">Tap a player to see their bingo line.</p>
@@ -212,7 +273,54 @@ function HostReview({ game }) {
                   </figure>
                 ))}
               </div>
-              <p className="mt-6 text-lavender">Approve / Disqualify comes next.</p>
+
+              <div className="mt-6">
+                {selected.status === 'approved' || selected.status === 'disqualified' ? (
+                  <div className="flex items-center gap-4">
+                    <span
+                      className={`rounded-full px-4 py-2 font-bold ${statusLabel[selected.status].className}`}
+                    >
+                      {statusLabel[selected.status].text}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => decide(selected, 'pending')}
+                      disabled={deciding}
+                      className="h-12 rounded-full border-2 border-lavender px-6 font-bold text-soft-white disabled:opacity-50"
+                    >
+                      Undo
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => decide(selected, 'approved')}
+                      disabled={deciding}
+                      className="h-12 rounded-full border-2 border-mint px-8 font-bold text-mint disabled:opacity-50"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => decide(selected, 'disqualified')}
+                      disabled={deciding}
+                      className="h-12 rounded-full border-2 border-coral px-8 font-bold text-coral disabled:opacity-50"
+                    >
+                      Disqualify
+                    </button>
+                  </div>
+                )}
+                <p className="mt-3 text-sm text-lavender">
+                  Disqualify if a photo is missing the prompt, the same person appears twice, or
+                  it’s a photo of a screen or picture.
+                </p>
+                {decisionError && (
+                  <p role="alert" className="mt-3 text-coral">
+                    {decisionError}
+                  </p>
+                )}
+              </div>
             </>
           )}
         </section>
