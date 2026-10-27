@@ -81,7 +81,7 @@ function PlayerWaiting() {
   if (!loadError && player && game?.status === 'finished') {
     return (
       <AppShell>
-        <Results code={code} />
+      <Results code={code} player={player} gridSize={game.grid_size} />
       </AppShell>
     )
   }

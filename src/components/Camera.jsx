@@ -180,7 +180,7 @@ function Camera({ prompt, onClose, onUsePhoto }) {
             </div>
           )}
           <p className="mt-4 text-center text-sm text-lavender">
-            Ask first. Only the host sees this photo.
+            Ask first. This photo goes to the host, and you can save it to your bingo card later.
           </p>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
+import ShareCard from './ShareCard.jsx'
 
 // 401 -> "6:41"
 function formatTime(totalSeconds) {
@@ -27,7 +28,7 @@ const podiumHeight = {
   3: 'h-16 sm:h-20',
 }
 
-function Results({ code, isHost = false }) {
+function Results({ code, isHost = false, player = null, gridSize = null }) {
   const [results, setResults] = useState(null)
   const [loadError, setLoadError] = useState(null)
 
@@ -72,6 +73,9 @@ function Results({ code, isHost = false }) {
             {me.time_sec !== null ? `Bingo in ${formatTime(me.time_sec)}` : resultText(me)}
           </p>
         </div>
+      )}
+            {me && player && (
+        <ShareCard player={player} gridSize={gridSize} me={me} playerCount={playerCount} />
       )}
 
       <div

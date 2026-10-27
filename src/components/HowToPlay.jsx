@@ -25,6 +25,7 @@ const rules = [
   'No photos of screens or pictures.',
   'Break a rule and the host can disqualify you.',
   'Only the host sees your photos. They’re deleted 24 hours after the game.',
+  'Only share photos of people who said yes.',
   'No mobile data? Team up with a friend.',
 ]
 
