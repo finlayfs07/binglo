@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import HostShell from '../components/HostShell.jsx'
 import HostGame from '../components/HostGame.jsx'
+import HostReview from '../components/HostReview.jsx'
 import { ensureSignedIn, supabase } from '../lib/supabase.js'
 
 const outlinedButtonClass =
@@ -171,13 +172,17 @@ function HostLobby() {
     )
   }
 
-  // Placeholder until the Review (Step 21) and Results (Step 22) screens exist.
-  if (game.status === 'review' || game.status === 'finished') {
+  if (game.status === 'review') {
+    return <HostReview game={game} />
+  }
+
+  // Placeholder until the Results screen (Step 22) exists.
+  if (game.status === 'finished') {
     return (
       <HostShell>
         <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <h1 className="text-5xl font-extrabold">Game over</h1>
-          <p className="mt-4 text-2xl text-lavender">Status: {game.status}</p>
+          <h1 className="text-5xl font-extrabold">Results published</h1>
+          <p className="mt-4 text-2xl text-lavender">Results screen comes in Step 22</p>
         </div>
       </HostShell>
     )
