@@ -4,6 +4,7 @@ import { useParams } from 'react-router'
 import HostShell from '../components/HostShell.jsx'
 import HostGame from '../components/HostGame.jsx'
 import HostReview from '../components/HostReview.jsx'
+import Results from '../components/Results.jsx'
 import { ensureSignedIn, supabase } from '../lib/supabase.js'
 
 const outlinedButtonClass =
@@ -181,14 +182,10 @@ function HostLobby() {
     )
   }
 
-  // Placeholder until the Results screen (Step 22) exists.
-  if (game.status === 'finished') {
+   if (game.status === 'finished') {
     return (
       <HostShell>
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <h1 className="text-5xl font-extrabold">Results published</h1>
-          <p className="mt-4 text-2xl text-lavender">Results screen comes in Step 22</p>
-        </div>
+        <Results code={code} isHost />
       </HostShell>
     )
   }

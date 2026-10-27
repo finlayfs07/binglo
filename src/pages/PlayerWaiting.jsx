@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import AppShell from '../components/AppShell.jsx'
 import Board from '../components/Board.jsx'
+import Results from '../components/Results.jsx'
 import { ensureSignedIn, supabase } from '../lib/supabase.js'
 
 function PlayerWaiting() {
@@ -75,6 +76,15 @@ function PlayerWaiting() {
     const intervalId = setInterval(poll, 3000)
     return () => clearInterval(intervalId)
   }, [code])
+
+    // Results published: show them (the 3 s poll notices status = finished).
+  if (!loadError && player && game?.status === 'finished') {
+    return (
+      <AppShell>
+        <Results code={code} />
+      </AppShell>
+    )
+  }
 
   // Playing, review or finished: show the board (it locks itself at time's up).
   if (!loadError && player && game && game.status !== 'lobby') {
