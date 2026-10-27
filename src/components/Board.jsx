@@ -21,6 +21,21 @@ function formatTime(totalSeconds) {
   return `${minutes}:${seconds}`
 }
 
+// Server answers that a retry can't change: show them straight away.
+const FINAL_ERRORS = [
+  'The game is over',
+  'part of your bingo',
+  'FREE square',
+  'Player not found',
+  'Invalid',
+]
+
+function isFinalError(message = '') {
+  return FINAL_ERRORS.some((text) => message.includes(text))
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
 function Board({
   playerId,
   gameId,
@@ -88,24 +103,34 @@ function Board({
     })
   }
 
+  // Try up to 3 times (now, +2 s, +4 s) unless the server says no for good.
   async function sendPhoto(index, photo) {
     setUpload(index, { photo, status: 'uploading' })
-    try {
-      const player = await uploadProof({
-        gameId,
-        playerId,
-        cellIndex: index,
-        photo,
-      })
-      setMarked((current) => new Set(current).add(index))
-      setUpload(index, null)
-      setOpenIndex((current) => (current === index ? null : current))
-      if (player.finished_at) setFinishedAt(player.finished_at)
-      if (player.winning_line) setWinningLine(player.winning_line)
-    } catch (error) {
-      // Keep the photo so "Try again" can resend it.
-      setUpload(index, { photo, status: 'failed', error: error.message })
+    let lastError = null
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await sleep(2000 * attempt)
+      try {
+        const player = await uploadProof({
+          gameId,
+          playerId,
+          cellIndex: index,
+          photo,
+        })
+        setMarked((current) => new Set(current).add(index))
+        setUpload(index, null)
+        setOpenIndex((current) => (current === index ? null : current))
+        if (player.finished_at) setFinishedAt(player.finished_at)
+        if (player.winning_line) setWinningLine(player.winning_line)
+        return
+      } catch (error) {
+        lastError = error
+        if (isFinalError(error.message)) break
+      }
     }
+
+    // Keep the photo so "Try again" can resend it.
+    setUpload(index, { photo, status: 'failed', error: lastError.message })
   }
 
   function handleUsePhoto(photo) {

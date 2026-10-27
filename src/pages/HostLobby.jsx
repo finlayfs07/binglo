@@ -1,9 +1,9 @@
 import { QRCodeSVG } from 'qrcode.react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
-import HostShell from '../components/HostShell.jsx'
 import HostGame from '../components/HostGame.jsx'
 import HostReview from '../components/HostReview.jsx'
+import HostShell from '../components/HostShell.jsx'
 import Results from '../components/Results.jsx'
 import { ensureSignedIn, supabase } from '../lib/supabase.js'
 
@@ -163,7 +163,6 @@ function HostLobby() {
     )
   }
 
-
   if (game.status === 'playing') {
     return (
       <HostGame
@@ -174,7 +173,7 @@ function HostLobby() {
   }
 
   if (game.status === 'review') {
-      return (
+    return (
       <HostReview
         game={game}
         onPublished={(status) => setGame((current) => ({ ...current, status }))}
@@ -182,7 +181,7 @@ function HostLobby() {
     )
   }
 
-   if (game.status === 'finished') {
+  if (game.status === 'finished') {
     return (
       <HostShell>
         <Results code={code} isHost />
@@ -190,12 +189,13 @@ function HostLobby() {
     )
   }
 
+  // Lobby: code + QR on the left, players + Start on the right.
   return (
     <HostShell>
-      <div className="grid flex-1 gap-12 lg:grid-cols-2">
+      <div className="grid flex-1 items-start gap-12 lg:grid-cols-2">
         <section className="flex flex-col items-center text-center">
           <p className="text-xl text-lavender">Join at binglo.vercel.app</p>
-          <p className="mt-2 text-8xl font-extrabold tracking-[0.2em]">{code}</p>
+          <p className="mt-2 text-7xl font-extrabold tracking-[0.08em] lg:text-8xl">{code}</p>
           <div className="mt-6 rounded-2xl bg-soft-white p-4">
             <QRCodeSVG
               value={joinUrl}
@@ -217,17 +217,36 @@ function HostLobby() {
           </div>
         </section>
 
-        <section>
+        <section className="flex flex-col">
           <div className="flex items-center gap-3">
             <h2 className="text-3xl font-bold">Players</h2>
             <span className="rounded-full bg-mint px-3 py-1 text-lg font-bold text-navy">
               {players.length}
             </span>
           </div>
+
+          {/* Start sits above the list, so it's visible even with 200 players. */}
+          <div className="mt-6">
+            <button
+              type="button"
+              disabled={!canStart || starting}
+              onClick={handleStart}
+              className={mainButtonClass}
+            >
+              {starting ? 'Starting…' : 'Start game'}
+            </button>
+            {!canStart && <p className="mt-2 text-lavender">Need at least 2 players</p>}
+            {startError && (
+              <p role="alert" className="mt-2 text-coral">
+                {startError}
+              </p>
+            )}
+          </div>
+
           {players.length === 0 ? (
-            <p className="mt-6 text-xl text-lavender">Waiting for players to join…</p>
+            <p className="mt-8 text-xl text-lavender">Waiting for players to join…</p>
           ) : (
-            <ul className="mt-6 flex flex-wrap gap-3">
+            <ul className="mt-8 flex max-h-[50vh] flex-wrap content-start gap-3 overflow-y-auto">
               {players.map((player) => (
                 <li
                   key={player.id}
@@ -239,23 +258,6 @@ function HostLobby() {
             </ul>
           )}
         </section>
-      </div>
-
-      <div className="mt-10 flex flex-col items-center gap-3">
-        {startError && (
-          <p role="alert" className="text-coral">
-            {startError}
-          </p>
-        )}
-        <button
-          type="button"
-          disabled={!canStart || starting}
-          onClick={handleStart}
-          className={mainButtonClass}
-        >
-          {starting ? 'Starting…' : 'Start game'}
-        </button>
-        {!canStart && <p className="text-lavender">Need at least 2 players</p>}
       </div>
     </HostShell>
   )
